@@ -477,7 +477,7 @@
   }
 
   function reset() {
-    score = 0; hydration = 0.9; combo = 1; comboTimer = 0;
+    score = 0; hydration = 0.85; combo = 1; comboTimer = 0;
     spawnTimer = 0; spawnGap = 0.85; elapsed = 0; shakeT = 0;
     drops = []; particles = [];
     cleanStreak = 0; lastComboTitle = 0; thunderTimer = 0;
@@ -542,11 +542,11 @@
   // single bad catch stings but never instakills (see also the low-meter softening
   // in catchDrop). golden = Konami reward, 5× points, big refill.
   const TYPES = {
-    pocari: { good: true,  r: 18, hyd: 0.14,  pts: 10, color: ['#bfeaff', '#009fe3'] },
-    ion:    { good: true,  r: 13, hyd: 0.06,  pts: 5,  color: ['#fff7a8', '#ffd400'], ion: true },
-    water:  { good: true,  r: 16, hyd: 0.10,  pts: 6,  color: ['#e9fbff', '#7fd8f7'] },
-    soda:   { good: false, r: 17, hyd: -0.075, pts: 0, color: ['#ff9a7a', '#e23c3c'] },
-    coffee: { good: false, r: 16, hyd: -0.06,  pts: 0, color: ['#9c6f4e', '#3a2418'] },
+    pocari: { good: true,  r: 18, hyd: 0.078, pts: 10, color: ['#bfeaff', '#009fe3'] },
+    ion:    { good: true,  r: 13, hyd: 0.034, pts: 5,  color: ['#fff7a8', '#ffd400'], ion: true },
+    water:  { good: true,  r: 16, hyd: 0.054, pts: 6,  color: ['#e9fbff', '#7fd8f7'] },
+    soda:   { good: false, r: 17, hyd: -0.09, pts: 0, color: ['#ff9a7a', '#e23c3c'] },
+    coffee: { good: false, r: 16, hyd: -0.07, pts: 0, color: ['#9c6f4e', '#3a2418'] },
     golden: { good: true,  r: 21, hyd: 0.18,  pts: 50, color: ['#fff3b0', '#ffb800'], golden: true },
   };
 
@@ -554,11 +554,11 @@
     let key = forceKey;
     if (!key) {
       const roll = Math.random();
-      // ~36% bad (soda/coffee) — roughly double the previous bad-drop rate
-      if (roll < 0.36) key = 'pocari';
-      else if (roll < 0.52) key = 'ion';
-      else if (roll < 0.64) key = 'water';
-      else if (roll < 0.82) key = 'soda';
+      // 60% good / 40% bad
+      if (roll < 0.33) key = 'pocari';
+      else if (roll < 0.485) key = 'ion';
+      else if (roll < 0.60) key = 'water';
+      else if (roll < 0.80) key = 'soda';
       else key = 'coffee';
     }
     const t = TYPES[key];
@@ -610,10 +610,10 @@
     // combo decay
     if (comboTimer > 0) { comboTimer -= dt; if (comboTimer <= 0) { combo = 1; lastComboTitle = 0; } }
 
-    // drain over time — deliberately slower than the rate you can refill.
-    // At ~0.012/s, a single Pocari (+0.14) buys ~12s; catching one good drop
-    // every few seconds keeps you net-positive. Ramps up only very gradually.
-    hydration -= dt * (0.012 + elapsed * 0.0002);
+    // drain over time — tuned (via simulation) so you must keep catching a
+    // steady stream of good drops; ramps up so a run always ends eventually.
+    // Median survival lands ~80–100s; great runs reach ~3 min.
+    hydration -= dt * (0.032 + elapsed * 0.00055);
 
     // drops
     const px = player.x, py = player.y, pw = player.w;
@@ -701,7 +701,7 @@
       else if (combo >= 4 && lastComboTitle < 4) { lastComboTitle = 4; flashTitle('HYDRATED'); }
     } else {
       // soften the hit when already low so one bad drop can't instakill
-      hydration += hydration < 0.35 ? t.hyd * 0.5 : t.hyd;
+      hydration += hydration < 0.30 ? t.hyd * 0.5 : t.hyd;
       combo = 1; comboTimer = 0; cleanStreak = 0; lastComboTitle = 0;
       score = Math.max(0, score - 4);
       burst(d.x, d.y, t.color, 14);
