@@ -243,36 +243,15 @@
     if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
   }
 
-  // ---- Ambient bed: a soft drone + a slow pentatonic music-box that wanders.
-  // Meant to be pleasant to just sit and listen to. Also drives "perfect pitch".
-  let padGain = null, beatTimer = null, lastBeat = 0, beatStep = 0;
+  // No background sound — all audible sound is action-driven. We keep only a
+  // silent metronome so the "perfect pitch" on-beat bonus can still fire.
+  let beatTimer = null, lastBeat = 0;
   const BEAT = 0.82; // seconds (~73 BPM)
   function startAmbient() {
-    if (!audioCtx || padGain) return;
-    padGain = audioCtx.createGain(); padGain.gain.value = 0; padGain.connect(master);
-    const lp = audioCtx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 560; lp.Q.value = 3; lp.connect(padGain);
-    // slow LFO sweeps the filter for gentle movement
-    const lfo = audioCtx.createOscillator(), lfoG = audioCtx.createGain();
-    lfo.frequency.value = 0.045; lfoG.gain.value = 240; lfo.connect(lfoG); lfoG.connect(lp.frequency); lfo.start();
-    [130.81, 196.0, 261.63].forEach((f, i) => { // C3 · G3 · C4 drone
-      const o = audioCtx.createOscillator(); o.type = 'sine'; o.frequency.value = f; o.detune.value = (i - 1) * 6;
-      const g = audioCtx.createGain(); g.gain.value = i === 0 ? 0.5 : 0.26; o.connect(g); g.connect(lp); o.start();
-    });
-    if (reverbSend) { const w = audioCtx.createGain(); w.gain.value = 0.55; padGain.connect(w); w.connect(reverbSend); }
-    padGain.gain.linearRampToValueAtTime(muted ? 0 : 0.05, audioCtx.currentTime + 3.5); // gentle fade-in
+    if (!audioCtx || beatTimer) return;
     lastBeat = audioCtx.currentTime;
-    beatTimer = setInterval(() => {
-      lastBeat = audioCtx.currentTime;
-      if (muted) return;
-      beatStep = (beatStep + 1) % 16;
-      // a soft music-box note every other beat, wandering up & down the scale
-      if (beatStep % 2 === 0) {
-        const idx = Math.floor(beatStep / 2 + (Math.random() < 0.35 ? 1 : 0)) % PENT.length;
-        voice(PENT[idx], { type: 'sine', dur: 1.0, vol: 0.038, a: 0.03, wet: 0.6 });
-      }
-    }, BEAT * 1000);
+    beatTimer = setInterval(() => { lastBeat = audioCtx.currentTime; }, BEAT * 1000);
   }
-  // true when a catch lands close to the ambient beat (for the perfect-pitch egg)
   function onBeatNow() { return audioCtx && !muted && (audioCtx.currentTime - lastBeat) < 0.17; }
   function env(g, t0, vol, a, d) {
     g.gain.setValueAtTime(0.0001, t0);
@@ -444,7 +423,7 @@
   }
 
   function reset() {
-    score = 0; hydration = 0.7; combo = 1; comboTimer = 0;
+    score = 0; hydration = 0.85; combo = 1; comboTimer = 0;
     spawnTimer = 0; spawnGap = 0.85; elapsed = 0; shakeT = 0;
     drops = []; particles = [];
     cleanStreak = 0; lastComboTitle = 0; thunderTimer = 0;
@@ -508,9 +487,9 @@
   // single bad catch stings but never instakills (see also the low-meter softening
   // in catchDrop). golden = Konami reward, 5× points, big refill.
   const TYPES = {
-    pocari: { good: true,  r: 18, hyd: 0.10,  pts: 10, color: ['#bfeaff', '#009fe3'] },
-    ion:    { good: true,  r: 13, hyd: 0.04,  pts: 5,  color: ['#fff7a8', '#ffd400'], ion: true },
-    water:  { good: true,  r: 16, hyd: 0.07,  pts: 6,  color: ['#e9fbff', '#7fd8f7'] },
+    pocari: { good: true,  r: 18, hyd: 0.14,  pts: 10, color: ['#bfeaff', '#009fe3'] },
+    ion:    { good: true,  r: 13, hyd: 0.06,  pts: 5,  color: ['#fff7a8', '#ffd400'], ion: true },
+    water:  { good: true,  r: 16, hyd: 0.10,  pts: 6,  color: ['#e9fbff', '#7fd8f7'] },
     soda:   { good: false, r: 17, hyd: -0.075, pts: 0, color: ['#ff9a7a', '#e23c3c'] },
     coffee: { good: false, r: 16, hyd: -0.06,  pts: 0, color: ['#9c6f4e', '#3a2418'] },
     golden: { good: true,  r: 21, hyd: 0.18,  pts: 50, color: ['#fff3b0', '#ffb800'], golden: true },
@@ -520,10 +499,10 @@
     let key = forceKey;
     if (!key) {
       const roll = Math.random();
-      if (roll < 0.42) key = 'pocari';
-      else if (roll < 0.60) key = 'ion';
-      else if (roll < 0.74) key = 'water';
-      else if (roll < 0.88) key = 'soda';
+      if (roll < 0.46) key = 'pocari';
+      else if (roll < 0.66) key = 'ion';
+      else if (roll < 0.82) key = 'water';
+      else if (roll < 0.91) key = 'soda';
       else key = 'coffee';
     }
     const t = TYPES[key];
@@ -575,8 +554,8 @@
     // combo decay
     if (comboTimer > 0) { comboTimer -= dt; if (comboTimer <= 0) { combo = 1; lastComboTitle = 0; } }
 
-    // drain over time
-    hydration -= dt * (0.045 + elapsed * 0.0009);
+    // drain over time — gentle, ramps up slowly so early game is survivable
+    hydration -= dt * (0.018 + elapsed * 0.00035);
 
     // drops
     const px = player.x, py = player.y, pw = player.w;
@@ -842,7 +821,6 @@
   function toggleMute() {
     muted = !muted;
     if (!muted) { initAudio(); SFX.speed(); }
-    if (padGain && audioCtx) padGain.gain.setTargetAtTime(muted ? 0 : 0.05, audioCtx.currentTime, 0.3);
     updateSpeedBadge();
   }
 
