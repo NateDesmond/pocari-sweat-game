@@ -139,6 +139,29 @@
   }
   #scanlines.on { opacity: 1; }
   #wrap.retro { filter: saturate(1.5) contrast(1.12); }
+
+  /* Secrets panel (mobile-friendly egg toggles) */
+  #secrets {
+    position: absolute; top: 122px; right: 14px; z-index: 9;
+    display: flex; flex-direction: column; gap: 7px; width: 156px;
+    background: rgba(255,255,255,.92); border: 2px solid #fff; border-radius: 16px;
+    padding: 12px; box-shadow: 0 10px 30px rgba(0,53,92,.3);
+    transform-origin: top right; transition: opacity .18s, transform .18s;
+  }
+  #secrets.hidden { opacity: 0; transform: scale(.85); pointer-events: none; }
+  #secrets .sec-title { font-weight: 900; font-style: italic; font-size: 13px; color: var(--pocari-deep); letter-spacing: .5px; }
+  #secrets button[data-egg] {
+    -webkit-appearance: none; appearance: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: space-between;
+    font-weight: 800; font-size: 13px; color: var(--ink);
+    background: rgba(0,102,179,.08); border: 2px solid transparent; border-radius: 12px;
+    padding: 9px 11px; min-height: 40px; transition: background .12s, border-color .12s, color .12s;
+  }
+  #secrets button[data-egg]::after { content: 'OFF'; font-size: 10px; font-weight: 900; opacity: .5; letter-spacing: .5px; }
+  #secrets button[data-egg].on { background: linear-gradient(180deg,#39b6ec,#0066b3); color: #fff; border-color: #fff; }
+  #secrets button[data-egg].on::after { content: 'ON'; opacity: 1; }
+  #secrets .sec-note { font-size: 10px; line-height: 1.35; opacity: .6; font-weight: 600; margin-top: 2px; }
+  #eggBtn.open { color: #fff; background: linear-gradient(180deg,#b07cff,#7b3ff2); }
 </style>
 </head>
 <body>
@@ -153,6 +176,16 @@
   <div id="controls">
     <button id="speedBadge" title="Tap to change speed">1×</button>
     <button id="muteBtn" title="Mute / unmute">🔊</button>
+    <button id="eggBtn" title="Secrets">✨</button>
+  </div>
+  <div id="secrets" class="hidden">
+    <div class="sec-title">✨ SECRETS</div>
+    <button data-egg="rain">🌧️ Rain</button>
+    <button data-egg="moon">🌙 Lunar</button>
+    <button data-egg="retro">📺 Retro</button>
+    <button data-egg="flip">🙃 Flip</button>
+    <button data-egg="force">🛡️ Force Field</button>
+    <div class="sec-note">Konami ↑↑↓↓←→←→ B A → golden can. On desktop you can also type the names.</div>
   </div>
   <div id="scanlines"></div>
   <div id="eggTitle"></div>
@@ -369,7 +402,7 @@
   let best = +(localStorage.getItem('pocari_best') || 0);
 
   // ---- Easter-egg state ----
-  let rainMode = false, moonMode = false, retroMode = false, flipMode = false;
+  let rainMode = false, moonMode = false, retroMode = false, flipMode = false, forceField = false;
   let cleanStreak = 0;     // consecutive good catches (breaks on a bad catch)
   let lastComboTitle = 0;  // so a combo title only flashes once per threshold
   let stars = [], rainDrops = [], thunderTimer = 0;
@@ -398,21 +431,33 @@
     stars = [];
     for (let i = 0; i < 70; i++) stars.push({ x: Math.random() * W, y: Math.random() * H * 0.85, r: Math.random() * 1.6 + 0.4, tw: Math.random() * 6 });
   }
-  function toggleRain() { rainMode = !rainMode; SFX.egg(); toast(rainMode ? '🌧️ Rain Mode' : 'Rain cleared', rainMode ? 'type "rain" again to stop' : ''); }
+  function toggleRain() { rainMode = !rainMode; SFX.egg(); toast(rainMode ? '🌧️ Rain Mode' : 'Rain cleared', rainMode ? 'tap again to stop' : ''); updateSecretChips(); }
   function toggleMoon() {
     moonMode = !moonMode; if (moonMode) initStars(); SFX.egg();
     toast(moonMode ? '🌙 Lunar Mode' : 'Back to Earth', moonMode ? 'low gravity · Lunar Dream Capsule' : '');
+    updateSecretChips();
   }
   function toggleRetro() {
     retroMode = !retroMode; SFX.egg();
     document.getElementById('scanlines').classList.toggle('on', retroMode);
     wrap.classList.toggle('retro', retroMode);
     toast(retroMode ? '📺 Retro 1980' : 'Modern mode', retroMode ? 'the year Pocari launched' : '');
+    updateSecretChips();
   }
   function toggleFlip() {
     flipMode = !flipMode; SFX.egg();
     player.y = playerHomeY();
     toast(flipMode ? '🙃 Gravity Flipped' : 'Gravity restored', flipMode ? 'drops rise from below' : '');
+    updateSecretChips();
+  }
+  function toggleForce() {
+    forceField = !forceField; SFX.egg();
+    toast(forceField ? '🛡️ Force Field' : 'Force field down', forceField ? 'good drops pulled in · bad repelled' : '');
+    updateSecretChips();
+  }
+  function updateSecretChips() {
+    const map = { rain: rainMode, moon: moonMode, retro: retroMode, flip: flipMode, force: forceField };
+    document.querySelectorAll('#secrets button[data-egg]').forEach(b => b.classList.toggle('on', !!map[b.dataset.egg]));
   }
   function konamiUnlock() {
     if (state !== State.PLAY) return;
@@ -427,10 +472,7 @@
     spawnTimer = 0; spawnGap = 0.85; elapsed = 0; shakeT = 0;
     drops = []; particles = [];
     cleanStreak = 0; lastComboTitle = 0; thunderTimer = 0;
-    // each run starts fresh — clear any discovered modes
-    rainMode = moonMode = retroMode = flipMode = false;
-    document.getElementById('scanlines').classList.remove('on');
-    wrap.classList.remove('retro');
+    // discovered modes persist across runs — toggle them via the ✨ panel or codes
     player.x = W / 2; player.y = playerHomeY(); player.vx = 0; player.tilt = 0;
   }
 
@@ -462,6 +504,7 @@
       if (typed.endsWith('rain')) toggleRain();
       else if (typed.endsWith('moon')) toggleMoon();
       else if (typed.endsWith('flip')) toggleFlip();
+      else if (typed.endsWith('force')) toggleForce();
       else if (typed.endsWith('1980')) toggleRetro();
       else return;
       typed = '';
@@ -499,10 +542,11 @@
     let key = forceKey;
     if (!key) {
       const roll = Math.random();
-      if (roll < 0.46) key = 'pocari';
-      else if (roll < 0.66) key = 'ion';
-      else if (roll < 0.82) key = 'water';
-      else if (roll < 0.91) key = 'soda';
+      // ~36% bad (soda/coffee) — roughly double the previous bad-drop rate
+      if (roll < 0.36) key = 'pocari';
+      else if (roll < 0.52) key = 'ion';
+      else if (roll < 0.64) key = 'water';
+      else if (roll < 0.82) key = 'soda';
       else key = 'coffee';
     }
     const t = TYPES[key];
@@ -566,6 +610,16 @@
       d.y += d.vy * dt;
       d.rot += d.vr * dt;
       d.wob += dt * 4;
+
+      // Force-field egg: vacuum good drops into the cup, shove bad ones aside
+      if (forceField) {
+        if (d.t.good) {
+          d.x += (px - d.x) * Math.min(1, dt * 7);
+          d.y += (py - d.y) * Math.min(1, dt * 5);
+        } else {
+          d.x += (d.x < px ? -1 : 1) * 540 * dt;
+        }
+      }
 
       // catch test (player cup mouth)
       if (d.y > py - 30 && d.y < py + 20 && Math.abs(d.x - px) < pw/2 + d.t.r*0.4) {
@@ -795,6 +849,17 @@
       ctx.stroke();
     }
 
+    if (forceField && state === State.PLAY) {
+      const tt = elapsed * 3;
+      ctx.save();
+      ctx.strokeStyle = 'rgba(120,200,255,' + (0.45 + 0.2 * Math.sin(tt)) + ')';
+      ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(player.x, player.y - 6, 72 + Math.sin(tt) * 4, 0, Math.PI * 2); ctx.stroke();
+      ctx.strokeStyle = 'rgba(180,140,255,.22)';
+      ctx.beginPath(); ctx.arc(player.x, player.y - 6, 94, 0, Math.PI * 2); ctx.stroke();
+      ctx.restore();
+    }
+
     if (state === State.PLAY || state === State.OVER) drawBottle(player.x, player.y, player.tilt);
 
     // floaters
@@ -862,6 +927,19 @@
   document.getElementById('againBtn').addEventListener('click', startGame);
   document.getElementById('speedBadge').addEventListener('click', () => { initAudio(); setSpeed(speedIdx + 1); });
   document.getElementById('muteBtn').addEventListener('click', toggleMute);
+
+  // Secrets panel (touch-friendly egg toggles)
+  const eggBtn = document.getElementById('eggBtn'), secrets = document.getElementById('secrets');
+  eggBtn.addEventListener('click', () => {
+    initAudio();
+    const open = secrets.classList.toggle('hidden') === false;
+    eggBtn.classList.toggle('open', open);
+    if (open) updateSecretChips();
+  });
+  const EGG_TOGGLES = { rain: toggleRain, moon: toggleMoon, retro: toggleRetro, flip: toggleFlip, force: toggleForce };
+  document.querySelectorAll('#secrets button[data-egg]').forEach(b =>
+    b.addEventListener('click', () => { initAudio(); EGG_TOGGLES[b.dataset.egg](); }));
+
   updateSpeedBadge();
 })();
 </script>
