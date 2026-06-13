@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pocari Sweat — History &amp; Creation</title>
+<style>
+  :root{
+    --blue:#009fe3; --deep:#0066b3; --ink:#00355c; --pale:#d6f0fb;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%; font-family:-apple-system,"Segoe UI",Roboto,Helvetica,sans-serif; color:var(--ink); background:#06243d;}
+  #deck{position:fixed; inset:0; overflow:hidden;}
+  .slide{
+    position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center;
+    padding:8vh 9vw; opacity:0; transform:translateX(40px); pointer-events:none;
+    transition:opacity .45s ease, transform .45s ease;
+    background:linear-gradient(155deg,#eaf8ff 0%,#bfe8fb 60%,#8fd4f3 100%);
+  }
+  .slide.active{opacity:1; transform:translateX(0); pointer-events:auto;}
+  .slide.dark{background:linear-gradient(160deg,#003a66 0%,#0066b3 55%,#009fe3 100%); color:#fff;}
+  .slide.night{background:radial-gradient(circle at 70% 25%,#10406b,#04111f 70%); color:#eaf6ff;}
+
+  .eyebrow{font-weight:800; letter-spacing:3px; font-size:clamp(11px,1.4vw,15px); text-transform:uppercase; opacity:.75; margin-bottom:18px;}
+  h1{font-size:clamp(34px,6vw,82px); font-weight:900; font-style:italic; letter-spacing:-2px; line-height:.95;}
+  h1 .w{color:#fff; -webkit-text-stroke:2px var(--deep);}
+  h2{font-size:clamp(26px,4.4vw,52px); font-weight:900; letter-spacing:-1px; line-height:1.02; margin-bottom:26px;}
+  .lead{font-size:clamp(16px,2.1vw,25px); line-height:1.55; max-width:60ch; font-weight:500;}
+  .lead b{color:var(--deep);}
+  .slide.dark .lead b, .slide.night .lead b{color:#aef0ff;}
+  ul{list-style:none; display:flex; flex-direction:column; gap:14px; margin-top:8px; max-width:62ch;}
+  li{font-size:clamp(15px,1.9vw,22px); line-height:1.4; padding-left:34px; position:relative; font-weight:500;}
+  li::before{content:"💧"; position:absolute; left:0; top:0; font-size:.9em;}
+  .slide.dark li::before, .slide.night li::before{content:"●"; color:#8fe1ff;}
+  .stat{display:flex; gap:5vw; flex-wrap:wrap; margin-top:10px;}
+  .stat div{min-width:140px;}
+  .stat .n{font-size:clamp(34px,5.5vw,64px); font-weight:900; font-style:italic; color:var(--deep); line-height:1;}
+  .slide.dark .stat .n,.slide.night .stat .n{color:#fff;}
+  .stat .l{font-size:clamp(12px,1.4vw,16px); font-weight:700; letter-spacing:1px; text-transform:uppercase; opacity:.7; margin-top:8px;}
+  .big{font-size:clamp(60px,16vw,200px); font-weight:900; font-style:italic; color:var(--deep); line-height:.85; letter-spacing:-4px;}
+  .slide.night .big{color:#cdeeff;}
+  .quote{font-size:clamp(20px,3vw,38px); font-weight:700; font-style:italic; line-height:1.3; max-width:24ch;}
+  .small{margin-top:22px; font-size:clamp(12px,1.4vw,15px); opacity:.6; font-weight:600;}
+  .logo{position:fixed; top:26px; left:34px; z-index:5; font-weight:900; font-style:italic; font-size:18px; letter-spacing:-.5px; color:var(--deep); text-shadow:0 1px 0 #fff;}
+  .logo span{color:var(--blue);}
+  .slide.dark ~ #chrome .logo, body.onDark .logo{color:#fff;}
+
+  /* chrome */
+  #bar{position:fixed; left:0; bottom:0; height:6px; background:linear-gradient(90deg,var(--deep),var(--blue)); width:0; transition:width .4s; z-index:6;}
+  #nav{position:fixed; bottom:22px; right:30px; display:flex; align-items:center; gap:14px; z-index:6;}
+  #count{font-weight:800; font-size:14px; color:var(--ink); background:rgba(255,255,255,.7); padding:6px 12px; border-radius:20px;}
+  .arrow{width:42px; height:42px; border:none; border-radius:50%; cursor:pointer; font-size:20px; font-weight:900;
+    background:linear-gradient(180deg,var(--blue),var(--deep)); color:#fff; box-shadow:0 6px 16px rgba(0,102,179,.4); transition:transform .08s;}
+  .arrow:active{transform:scale(.9);}
+  .arrow:disabled{opacity:.3; cursor:default;}
+  .hintkey{position:fixed; bottom:26px; left:34px; font-size:12px; opacity:.5; font-weight:600; z-index:6; color:var(--ink);}
+
+  .can{font-size:clamp(70px,12vw,150px); filter:drop-shadow(0 12px 22px rgba(0,102,179,.35));}
+  .row{display:flex; align-items:center; gap:6vw; flex-wrap:wrap;}
+  .col{flex:1; min-width:280px;}
+</style>
+</head>
+<body>
+<div class="logo">POCARI<span>SWEAT</span></div>
+
+<div id="deck">
+
+  <!-- 1 -->
+  <section class="slide dark active">
+    <div class="eyebrow">A History of an Icon</div>
+    <h1>POCARI<br><span class="w">SWEAT</span></h1>
+    <p class="lead" style="margin-top:30px;">How a Japanese pharmaceutical company turned the science of an <b>IV drip</b> into the drink you can sweat — and a billion-dollar cultural icon.</p>
+    <div class="small">Otsuka Pharmaceutical · Launched 1980 · Tokushima, Japan</div>
+  </section>
+
+  <!-- 2 -->
+  <section class="slide">
+    <div class="eyebrow">01 · The Maker</div>
+    <h2>Born from a medicine company,<br>not a soda company.</h2>
+    <p class="lead">Pocari Sweat comes from <b>Otsuka Pharmaceutical</b> — a firm whose roots trace to <b>1921</b>, when Busaburo Otsuka founded what became the Otsuka Pharmaceutical Factory. The pharma company itself was established in <b>1964</b>.</p>
+    <ul>
+      <li>Decades of expertise making <b>intravenous (IV) solutions</b> for hospitals</li>
+      <li>That fluid-and-electrolyte know-how became the foundation for a consumer drink</li>
+    </ul>
+  </section>
+
+  <!-- 3 -->
+  <section class="slide night">
+    <div class="eyebrow">02 · The Spark</div>
+    <div class="row">
+      <div class="col">
+        <h2>A lightbulb moment<br>in a Mexican hospital.</h2>
+        <p class="lead">In the early 1970s, researcher <b>Rokuro Harima</b> fell ill with severe diarrhea on a business trip to Mexico and was hospitalized. Watching a doctor drink an <b>IV-style rehydration solution</b>, he wondered: <b>what if you could bottle that?</b></p>
+      </div>
+      <div class="col" style="text-align:center;"><div class="big">💡</div></div>
+    </div>
+    <div class="small">The idea: a "drinkable IV drip" to replace water <em>and</em> the salts the body loses.</div>
+  </section>
+
+  <!-- 4 -->
+  <section class="slide">
+    <div class="eyebrow">03 · The Science</div>
+    <h2>Designed to taste like<br>what your body loses.</h2>
+    <p class="lead">Researchers studied <b>the composition of sweat</b> — and noticed it differs between athletes and people at rest. They engineered an <b>isotonic</b> drink that mirrors the body's own fluids, so water and electrolytes absorb quickly.</p>
+    <ul>
+      <li>Sodium, potassium, calcium &amp; magnesium — the ions lost in perspiration</li>
+      <li>Light sugars and citrus for fast absorption and a clean, mild taste</li>
+      <li>Non-carbonated — meant for replenishment, not refreshment alone</li>
+    </ul>
+  </section>
+
+  <!-- 5 -->
+  <section class="slide dark">
+    <div class="eyebrow">04 · The Long Road</div>
+    <div class="row">
+      <div class="col"><div class="big" style="color:#fff;">1,000</div></div>
+      <div class="col">
+        <h2 style="margin-bottom:18px;">prototypes before<br>it hit the shelf.</h2>
+        <p class="lead">Early versions tasted <b>far too bitter</b>. The breakthrough came when the team added a dash of <b>citrus juice powder</b>, finally landing on two candidate recipes with slightly different sugar levels.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 -->
+  <section class="slide">
+    <div class="eyebrow">05 · The Name</div>
+    <h2>"Sweat" — a marketing gamble<br>that became the brand.</h2>
+    <p class="lead"><b>"Pocari"</b> means nothing at all — it was invented purely for its light, bright, refreshing sound in Japanese. <b>"Sweat"</b> bluntly names what the drink replaces.</p>
+    <ul>
+      <li>A risky name in English-speaking markets — but unforgettable</li>
+      <li>The blue-and-white can evokes a clear sky and clean water</li>
+    </ul>
+  </section>
+
+  <!-- 7 -->
+  <section class="slide night">
+    <div class="eyebrow">06 · The Launch</div>
+    <div class="row">
+      <div class="col">
+        <h2>1980: a slow start,<br>then a flood.</h2>
+        <p class="lead">Sales were sluggish at first — the concept was unfamiliar. Otsuka responded by <b>giving away millions of free samples</b>, letting the taste and the after-sport feeling sell themselves. It worked.</p>
+      </div>
+      <div class="col" style="text-align:center;"><div class="can">🥤</div></div>
+    </div>
+  </section>
+
+  <!-- 8 -->
+  <section class="slide">
+    <div class="eyebrow">07 · Going Global</div>
+    <h2>From Tokushima to the world.</h2>
+    <div class="stat">
+      <div><div class="n">1982</div><div class="l">Hong Kong &amp; Taiwan</div></div>
+      <div><div class="n">1983</div><div class="l">Singapore &amp; the Middle East</div></div>
+      <div><div class="n">$1B+</div><div class="l">Shipped by the mid-1990s</div></div>
+      <div><div class="n">20+</div><div class="l">Countries &amp; regions today</div></div>
+    </div>
+    <p class="lead" style="margin-top:30px;">It became <b>Japan's first home-grown non-alcoholic drink to ship over $1 billion</b>. Sold as cans, then bottles, plus <b>powder</b> and the lighter <b>Ion Water</b>.</p>
+  </section>
+
+  <!-- 9 -->
+  <section class="slide dark">
+    <div class="eyebrow">08 · Culture</div>
+    <h2>A drink that became<br>a way of life in Asia.</h2>
+    <p class="lead">Beyond sport, Pocari Sweat wove itself into daily culture — <b>dreamy anime and cinematic ad campaigns</b>, a youthful blue identity, and huge popularity across <b>Indonesia, Korea and Southeast Asia</b>, where it's an everyday staple.</p>
+    <ul>
+      <li>One of the most recognizable beverage brands in Asia</li>
+      <li>Marketed for fever, exercise, travel and everyday hydration alike</li>
+    </ul>
+  </section>
+
+  <!-- 10 -->
+  <section class="slide night">
+    <div class="eyebrow">09 · To the Moon</div>
+    <div class="row">
+      <div class="col">
+        <h2>The first sports drink<br>aimed at the Moon.</h2>
+        <p class="lead">In 2014 Otsuka unveiled the <b>Lunar Dream Capsule</b> — a Pocari-shaped titanium time capsule holding <b>powdered Pocari Sweat</b> and children's dreams etched on discs, meant to ride a private lander to the lunar surface.</p>
+      </div>
+      <div class="col" style="text-align:center;"><div class="big">🌙</div></div>
+    </div>
+    <div class="small">The dream: open it in ~30 years and mix the powder with water mined on the Moon.</div>
+  </section>
+
+  <!-- 11 closing -->
+  <section class="slide dark">
+    <div class="eyebrow">The Legacy</div>
+    <h1 style="font-size:clamp(30px,5vw,64px);">"Closer to your body<br>than water itself."</h1>
+    <p class="lead" style="margin-top:26px;">From a hospital bed in Mexico to a moonbound capsule — Pocari Sweat turned <b>pharmaceutical science into an everyday icon</b>, and rewrote what a drink could be.</p>
+    <div class="small">Thank you · Sources: Otsuka Pharmaceutical, CNN Business, Wikipedia, Atlas Obscura</div>
+  </section>
+
+</div>
+
+<div id="bar"></div>
+<div id="nav">
+  <button class="arrow" id="prev">‹</button>
+  <span id="count">1 / 11</span>
+  <button class="arrow" id="next">›</button>
+</div>
+<div class="hintkey">← / → or Space to navigate · F for fullscreen</div>
+
+<script>
+  const slides = [...document.querySelectorAll('.slide')];
+  const bar = document.getElementById('bar');
+  const count = document.getElementById('count');
+  const prevBtn = document.getElementById('prev');
+  const nextBtn = document.getElementById('next');
+  let i = 0;
+
+  function show(n){
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, k) => s.classList.toggle('active', k === i));
+    bar.style.width = ((i + 1) / slides.length * 100) + '%';
+    count.textContent = (i + 1) + ' / ' + slides.length;
+    prevBtn.disabled = i === 0;
+    nextBtn.disabled = i === slides.length - 1;
+    document.body.classList.toggle('onDark', slides[i].classList.contains('dark') || slides[i].classList.contains('night'));
+  }
+  function go(d){ show(i + d); }
+
+  nextBtn.onclick = () => go(1);
+  prevBtn.onclick = () => go(-1);
+  window.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { go(1); e.preventDefault(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { go(-1); e.preventDefault(); }
+    else if (e.key === 'Home') show(0);
+    else if (e.key === 'End') show(slides.length - 1);
+    else if (e.key.toLowerCase() === 'f') { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }
+  });
+  // swipe
+  let sx = null;
+  window.addEventListener('touchstart', e => sx = e.touches[0].clientX);
+  window.addEventListener('touchend', e => {
+    if (sx == null) return;
+    const dx = e.changedTouches[0].clientX - sx;
+    if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1);
+    sx = null;
+  });
+  show(0);
+</script>
+</body>
+</html>
