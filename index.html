@@ -423,7 +423,7 @@
   }
 
   function reset() {
-    score = 0; hydration = 0.85; combo = 1; comboTimer = 0;
+    score = 0; hydration = 0.9; combo = 1; comboTimer = 0;
     spawnTimer = 0; spawnGap = 0.85; elapsed = 0; shakeT = 0;
     drops = []; particles = [];
     cleanStreak = 0; lastComboTitle = 0; thunderTimer = 0;
@@ -554,8 +554,10 @@
     // combo decay
     if (comboTimer > 0) { comboTimer -= dt; if (comboTimer <= 0) { combo = 1; lastComboTitle = 0; } }
 
-    // drain over time — gentle, ramps up slowly so early game is survivable
-    hydration -= dt * (0.018 + elapsed * 0.00035);
+    // drain over time — deliberately slower than the rate you can refill.
+    // At ~0.012/s, a single Pocari (+0.14) buys ~12s; catching one good drop
+    // every few seconds keeps you net-positive. Ramps up only very gradually.
+    hydration -= dt * (0.012 + elapsed * 0.0002);
 
     // drops
     const px = player.x, py = player.y, pw = player.w;
