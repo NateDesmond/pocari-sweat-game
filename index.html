@@ -247,7 +247,7 @@
   // Layered oscillators with ADSR envelopes, filtered-noise splashes, and a
   // reverb send for space. Notes use a C major pentatonic scale so combos
   // ascend musically instead of just beeping higher.
-  let audioCtx = null, muted = false, master = null, reverbSend = null, noiseBuf = null;
+  let audioCtx = null, muted = false, master = null, reverbSend = null, noiseBuf = null, audioUnlocked = false;
   const PENT = [523.25, 587.33, 659.25, 783.99, 880, 1046.5, 1174.66, 1318.5]; // C5 D5 E5 G5 A5 C6 D6 E6
 
   function initAudio() {
@@ -274,6 +274,15 @@
       startAmbient();
     }
     if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    // iOS/Safari unlock: a silent one-sample blip inside the user gesture frees
+    // the audio output. Without this, mobile stays completely silent.
+    if (audioCtx && !audioUnlocked) {
+      try {
+        const b = audioCtx.createBuffer(1, 1, 22050);
+        const s = audioCtx.createBufferSource(); s.buffer = b; s.connect(audioCtx.destination); s.start(0);
+        audioUnlocked = true;
+      } catch (e) {}
+    }
   }
 
   // No background sound — all audible sound is action-driven. We keep only a
@@ -297,7 +306,7 @@
     let { type = 'sine', dur = 0.3, vol = 0.2, a = 0.005, detune = 0, slideTo = null, wet = 0.25, delay = 0 } = o;
     // Retro mode chiptunes everything: smooth waves become buzzy ones
     if (typeof retroMode !== 'undefined' && retroMode) type = type === 'sine' ? 'square' : (type === 'triangle' ? 'sawtooth' : type);
-    const t0 = audioCtx.currentTime + delay;
+    const t0 = audioCtx.currentTime + 0.02 + delay;
     const osc = audioCtx.createOscillator(), g = audioCtx.createGain();
     osc.type = type; osc.frequency.setValueAtTime(freq, t0); osc.detune.value = detune;
     if (slideTo) osc.frequency.exponentialRampToValueAtTime(slideTo, t0 + a + dur);
@@ -310,7 +319,7 @@
   function noise(dur, o = {}) {
     if (!audioCtx || muted) return;
     const { type = 'lowpass', freq = 1200, q = 1, slideTo = null, vol = 0.18, wet = 0.2, delay = 0 } = o;
-    const t0 = audioCtx.currentTime + delay;
+    const t0 = audioCtx.currentTime + 0.02 + delay;
     const src = audioCtx.createBufferSource(); src.buffer = noiseBuf; src.loop = true;
     const filt = audioCtx.createBiquadFilter(); filt.type = type; filt.frequency.setValueAtTime(freq, t0); filt.Q.value = q;
     if (slideTo) filt.frequency.exponentialRampToValueAtTime(slideTo, t0 + dur);
@@ -410,7 +419,7 @@
   const KONAMI = ['arrowup','arrowup','arrowdown','arrowdown','arrowleft','arrowright','arrowleft','arrowright','b','a'];
   let konamiBuf = [];
 
-  function playerHomeY() { return flipMode ? 96 : H - 90; }
+  function playerHomeY() { return flipMode ? 156 : H - 90; } // flip: below the HUD/meter
 
   function toast(msg, sub) {
     const el = document.getElementById('toast');
@@ -486,7 +495,10 @@
   }
   canvas.addEventListener('mousemove', pointer);
   canvas.addEventListener('touchmove', e => { pointer(e); e.preventDefault(); }, { passive: false });
-  canvas.addEventListener('touchstart', e => { pointer(e); e.preventDefault(); }, { passive: false });
+  canvas.addEventListener('touchstart', e => { initAudio(); pointer(e); e.preventDefault(); }, { passive: false });
+  // Unlock audio on the very first user interaction anywhere (iOS requirement)
+  ['touchend', 'pointerdown', 'mousedown'].forEach(ev =>
+    window.addEventListener(ev, () => initAudio(), { passive: true }));
   function setSpeed(idx) {
     speedIdx = (idx + SPEEDS.length) % SPEEDS.length;
     speed = SPEEDS[speedIdx];
@@ -611,8 +623,9 @@
       d.rot += d.vr * dt;
       d.wob += dt * 4;
 
-      // Force-field egg: vacuum good drops into the cup, shove bad ones aside
-      if (forceField) {
+      // Force-field egg: only active in the bottom ~40% of the screen. Drops
+      // fall normally above the line, then get grabbed once they cross it.
+      if (forceField && d.y > H * 0.6) {
         if (d.t.good) {
           d.x += (px - d.x) * Math.min(1, dt * 7);
           d.y += (py - d.y) * Math.min(1, dt * 5);
@@ -718,7 +731,7 @@
   function drawBottle(x, y, tilt) {
     ctx.save();
     ctx.translate(x, y);
-    ctx.rotate(tilt);
+    ctx.rotate(tilt + (flipMode ? Math.PI : 0)); // flip mode: cup is upside-down, opening downward
     const w = player.w, h = player.h;
     // cup body (trapezoid, Pocari blue)
     const grad = ctx.createLinearGradient(0, -h/2, 0, h/2);
@@ -850,8 +863,17 @@
     }
 
     if (forceField && state === State.PLAY) {
-      const tt = elapsed * 3;
+      const tt = elapsed * 3, fy = H * 0.6;
       ctx.save();
+      // the boundary where the field activates
+      ctx.strokeStyle = 'rgba(150,200,255,' + (0.28 + 0.12 * Math.sin(tt)) + ')';
+      ctx.lineWidth = 2; ctx.setLineDash([9, 9]);
+      ctx.beginPath(); ctx.moveTo(0, fy); ctx.lineTo(W, fy); ctx.stroke();
+      ctx.setLineDash([]);
+      // faint tint over the active zone
+      ctx.fillStyle = 'rgba(120,180,255,.06)';
+      ctx.fillRect(0, fy, W, H - fy);
+      // pulsing ring around the cup
       ctx.strokeStyle = 'rgba(120,200,255,' + (0.45 + 0.2 * Math.sin(tt)) + ')';
       ctx.lineWidth = 3;
       ctx.beginPath(); ctx.arc(player.x, player.y - 6, 72 + Math.sin(tt) * 4, 0, Math.PI * 2); ctx.stroke();
@@ -939,6 +961,17 @@
   const EGG_TOGGLES = { rain: toggleRain, moon: toggleMoon, retro: toggleRetro, flip: toggleFlip, force: toggleForce };
   document.querySelectorAll('#secrets button[data-egg]').forEach(b =>
     b.addEventListener('click', () => { initAudio(); EGG_TOGGLES[b.dataset.egg](); }));
+  // Auto-close the panel when tapping anywhere outside it (but not on its chips
+  // or the ✨ button, so you can flip several toggles in a row).
+  function maybeCloseSecrets(e) {
+    if (secrets.classList.contains('hidden')) return;
+    const t = e.target;
+    if (t instanceof Node && (secrets.contains(t) || eggBtn.contains(t))) return;
+    secrets.classList.add('hidden');
+    eggBtn.classList.remove('open');
+  }
+  window.addEventListener('pointerdown', maybeCloseSecrets, true);
+  window.addEventListener('touchstart', maybeCloseSecrets, true);
 
   updateSpeedBadge();
 })();
